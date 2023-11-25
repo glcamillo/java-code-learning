@@ -1,4 +1,53 @@
 import java.util.*;
+/*   MIT License
+
+        Copyright (c) 2023 glcamillo
+
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+*/
+
+/* ---------------------------------------------------------------
+                     Jogo de Bingo online
+   --------------------------------------------------------------
+Executa um jogo de bingo no qual o método main conterá métodos para
+ - Entrada de jogadores
+ - Definição das cartelas: geradas aleatoriamente ou por entrada de usuário
+ - Execução do jogo através de rodadas com sorteio de cinco números que
+    a) podem ser gerados aleatoriamente; ou
+    b) inseridos manualmente
+ - O jogo termina quando:
+    a) ocorre um bingo: uma ou mais cartelas acertaram os cinco números; ou
+    b) o usuário encerra teclando X durante as definições ou durante as rodadas
+
+ Obs.:
+  - Foi definida uma única classe com métodos e dados estáticos.
+  - Antes de executar, verificar escolha da inicialização do gerador PRNG:
+     com ou sem semente, o que impactará na reprodutividade das execuções
+  - Maiores informações no Readme disponível em:
+    https://github.com/glcamillo/java-code-learning/tree/main/ProjetoBingo
+
+ Objetivo: atividade final do Módulo de Lógica de Programação I
+     do programa Ser + Tech Programa 50+ Turma #1076
+ Professor:  Rafael Rocha (https://gist.github.com/rafarocha)
+ Data: Nov 2023.
+ --------------------------------------------------------------
+ */
 
 public class ProjetoBingo {
 
@@ -15,7 +64,6 @@ public class ProjetoBingo {
 
     // Matriz para cartelas
     private static int[][] bingoScoreCard;
-
 
     // ------  Estrutura dados para RASTREAR o JOGO   -----
 
@@ -40,14 +88,21 @@ public class ProjetoBingo {
 
     // Gerador de números pseudoaletórios inicializado:
     //  COM semente: geração de uma mesma sequẽncia: fase TESTES do programa
+    /*
     private static final int seedValueForCards = 65537;
     private static final Random randomForCards = new Random(seedValueForCards);
     private static final int seedValueForGame = 27644437;
     private static final Random randomForGame = new Random(seedValueForGame);
+    */
     //  SEM semente: cada execução terá diferente sequência: fase PRODUÇÃO
-    // private static final Random random = new Random();
-    // private static final Random randomForGame = new Random();
+    private static final Random randomForCards = new Random();
+    private static final Random randomForGame = new Random();
 
+    // ---------------------------------------------------------------
+    //   Método main que contém chamadas de métodos para:
+    //   - Inicializar o jogo: jogadores e cartelas
+    //   - Executar o jogo do bingo
+    // ---------------------------------------------------------------
     public static void main(String[] args) {
         // Imprime cabeçalho e informações sobre o jogo
         printHeaderForBingo();
@@ -218,7 +273,7 @@ public class ProjetoBingo {
 
         Scanner readFromIn = new Scanner(System.in);
 
-        System.out.printf("\nb) Sorteio dos números: (M)anual  (A)leatória (X para sair)? ");
+        System.out.printf("\nb) Sorteio dos números: (A)leatória (M)anual (X para sair)? ");
         String lineInput = readFromIn.nextLine();
         switch (lineInput.toUpperCase()) {
             case "M":
@@ -272,9 +327,9 @@ public class ProjetoBingo {
             }
             orderPlayersByHits();
             findAndPrintTop3();
+            System.out.printf("\n   Tecle <ENTER> para continuar ou X para sair: ");
         } while (nextRound);
     }
-
 
     // Métodos diferentes para geração números aleatórios
     // Aleatoriedade para JOGO: executado em toda a rodada
@@ -362,14 +417,17 @@ public class ProjetoBingo {
                                     SPINNER_MIN_NUMBER, SPINNER_MAX_NUMBER);
                         }
                     } catch (NumberFormatException ex) {
-                        ex.printStackTrace();
-                        System.out.printf("\n !!! Erro na conversão !!! \n\n");
+                        System.out.printf("\n !!! Erro na conversão. Entrada DESCARTADA. !!! \n\n");
+                        nextRound = true;  // Vai para a próxima entrada.
+                        break;             // Desconsidera esta entrada.
                     }
-                    numbers[i] = numValue;
+                    numbers[i++] = numValue;
+
                     // Atualização do array de números sorteados
                     bingoSpinnerNumbers[numValue-1] = 0; // numValue=10 então
                                                         // bingoSpinnerNumbers[9] <= 0
                 }
+
                 checkoutHits(numbers);
                 printNumbers(numbers);
                 printGame();
@@ -407,6 +465,9 @@ public class ProjetoBingo {
         }
     }
 
+    // Método principal para gerar números aleatórios para as
+    //   CARTELAS. Serão gerados cinco números e testados se são únicos.
+    // Altera o array bidimensaional de cartelas por jogadores
     private static void genRandomCard() {
         bingoScoreCard = new int[numPlayers][LENGHT_OF_BOARD];
         int[] numbers;
@@ -458,6 +519,7 @@ public class ProjetoBingo {
         }
         return randomNumbers;
     }
+
     // Método para verificar se um número se encontra dentro de um array
     // Returna: true, se sim, ou false, se não
     private static boolean checkUniquenessValueInArray(int[] randomNumbers, int numRandom) {
@@ -467,6 +529,7 @@ public class ProjetoBingo {
         }
         return true;
     }
+
     // Método para gerar cartelas a partir da entrada do usuário
     private static void genCardFromInput() {
         bingoScoreCard = new int[numPlayers][LENGHT_OF_BOARD];
@@ -565,6 +628,7 @@ public class ProjetoBingo {
             invalidInput = false;
         }
     }
+
     // ---------------------------------------------------------------
     // =========  Métodos para IMPRESSÃO   ==================
     // ---------------------------------------------------------------
@@ -576,7 +640,6 @@ public class ProjetoBingo {
         for (int i = 0; i < 3; i++)
             System.out.printf("%2d %20s\n", winnersInOrder[i],
                     bingoCardPlayers[winnersInOrderPlayers[i]]);
-
     }
     private static void printHeaderForResults() {
         System.out.println();
@@ -600,10 +663,15 @@ public class ProjetoBingo {
         System.out.println();
     }
     private static void printGame() {
-        for (int i = 0; i < bingoScoreCardHITS.length; i++)
-            System.out.printf("\nNúmero Jogador:%2d - Nome:%20s %s", i,
-                    bingoCardPlayers[i],
-                    Arrays.toString(bingoScoreCardHITS[i]));
+        for (int i = 0; i < bingoScoreCardHITS.length; i++) {
+            // System.out.printf("\nNúmero Jogador:%2d - Nome:%20s %s", i,
+            //        bingoCardPlayers[i],
+            //        Arrays.toString(bingoScoreCardHITS[i]));
+            System.out.printf("\nNúmero Jogador:%2d - Nome:%20s  Acertos: ", i,
+                    bingoCardPlayers[i]);
+            for (int n = 0; n < bingoScoreCardHITS[i].length; n++)
+                System.out.printf("%d ", bingoScoreCardHITS[i][n] ? 1 : 0);
+        }
         System.out.println();
     }
     // Método para impressão das cartelas a cada jogada
