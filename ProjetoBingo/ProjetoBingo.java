@@ -1,8 +1,6 @@
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.util.*;
 
-public class Main {
+public class ProjetoBingo {
 
     // ------  Dados para CONFIGURAÇÃO do JOGO   -----
     // Tamanho do jogo
@@ -22,7 +20,7 @@ public class Main {
     // ------  Estrutura dados para RASTREAR o JOGO   -----
 
     // Array dos números que PODEM ser sorteados e aqueles
-    //     já sorteados (valor zerado)
+    //     já sorteados (valores setados em ZERO)
     private static int[] bingoSpinnerNumbers;
 
     // Matriz do Jogo: boolean[numPlayers][LENGHT_OF_BOARD]
@@ -30,28 +28,27 @@ public class Main {
     //      [numPlayers][LENGHT_OF_BOARD]
     private static boolean[][] bingoScoreCardHITS;
 
-    // Array dos jogadores que fizeram BINGO
-
+    // Array dos jogadores que fizeram BINGO (cartela vencedora)
     private static boolean[] bingoWinners;
 
     // Arrays para rastrear ordem (ranking) decrescente de acertos a cada rodada
     private static int[] winnersInOrder;           // []=numberHits
     private static int[] winnersInOrderPlayers;    // []=numPlayer
-    private static int[] winnersInOrderHits;
+
+    // Rastreia o número de rounds.
     static int numOfRounds = 0;
 
     // Gerador de números pseudoaletórios inicializado:
     //  COM semente: geração de uma mesma sequẽncia: fase TESTES do programa
-    private static int seedValueForCards = 65537;
+    private static final int seedValueForCards = 65537;
     private static final Random randomForCards = new Random(seedValueForCards);
-    private static int seedValueForGame = 27644437;
+    private static final int seedValueForGame = 27644437;
     private static final Random randomForGame = new Random(seedValueForGame);
     //  SEM semente: cada execução terá diferente sequência: fase PRODUÇÃO
     // private static final Random random = new Random();
     // private static final Random randomForGame = new Random();
 
     public static void main(String[] args) {
-
         // Imprime cabeçalho e informações sobre o jogo
         printHeaderForBingo();
 
@@ -62,7 +59,8 @@ public class Main {
         // Inicializa o Girador de Bingo (sacola com bolas de números)
         bingoSpinnerNumbers = new int[HOW_MANY_NUMBERS_IN_SPINNER];
         for (int i = SPINNER_MIN_NUMBER; i < SPINNER_MAX_NUMBER; i++)
-            bingoSpinnerNumbers[i-1] = i;    // número=1 então bingoSpinnerNumbers[0]=1
+            bingoSpinnerNumbers[i-1] = i;    // bingoSpinnerNumbers[0]
+                                             //    é a bolinha 1
 
         // Leitura de jogadores
         readPlayersFromInput();
@@ -78,7 +76,7 @@ public class Main {
 
         System.out.printf("\n\n =====     Impressão RESULTADOS do BINGO     ====\n");
         printGame();
-        printResults();
+        checkoutGameAndPrintResults();
 
         readFromIn.close();
     }
@@ -86,8 +84,7 @@ public class Main {
     // ---------------------------------------------------------------
     // ====     Saída e controle de ACERTOS(HITS) e GANHADORES  ======
     // ---------------------------------------------------------------
-
-    private static void printResults() {
+    private static void checkoutGameAndPrintResults() {
         // Imprime cabeçalho
         printHeaderForResults();
 
@@ -99,8 +96,9 @@ public class Main {
         if (foundBingoWinner)
             for (int i = 0; i < numPlayers; i++)
                 if (bingoWinners[i])
-                    System.out.printf("Cartela: %d  Números: %s   Jogador: %s\n",
-                            i, Arrays.toString(bingoScoreCard[i]), bingoCardPlayers[i]);
+                    System.out.printf("Cartela:%2d  Jogador:%10s   Números:%s\n",
+                            i, bingoCardPlayers[i],
+                            Arrays.toString(bingoScoreCard[i]));
 
         System.out.printf("\nRelação de números sorteados:\n");
         for (int i =0; i < HOW_MANY_NUMBERS_IN_SPINNER; i++) {
@@ -111,10 +109,14 @@ public class Main {
 
         System.out.printf("\nRanking de acertos:\n");
         for (int i = 0; i < numPlayers; i++)
-            System.out.printf("%2d %10s\n", winnersInOrder[i],
+            System.out.printf("%2d %20s\n", winnersInOrder[i],
                     bingoCardPlayers[winnersInOrderPlayers[i]]);
     }
 
+    // Método para ordenar ranking de acertos. Executado a cada rodada.
+    //   Atualiza:  winnersInOrder: array decrescente de acertos
+    //              winnersInOrderPlayers: array com os correspondentes
+    //              números dos jogadores
     private static void orderPlayersByHits() {
         // Atualiza array de jogadores ganhadores (winnersInOrder) com
         //   valores de acertos.
@@ -141,6 +143,9 @@ public class Main {
         }
     }
 
+    // Método para contabilizar quantidade de acertos por jogador.
+    // Executado a cada rodada.
+    //   Atualiza: winnersInOrder
     private static void checkoutNumberOfHits() {
         for (int i = 0; i < numPlayers; i++) { // Jogadores -> cartelas
             int countHits = 0;
@@ -151,6 +156,9 @@ public class Main {
         }
     }
 
+    // Método para encontrar ganhador de bingo. Executado a cada rodada.
+    //   Retorna: boolean: True se houve ganhador.
+    //   Atualiza: bingoWinners array no qual o índice com valor true indica bingo
     private static boolean findBingoWinner() {
         boolean foundBindoWinner = false;
         for (int i = 0; i < numPlayers; i++) { // Jogadores -> cartelas
@@ -170,14 +178,10 @@ public class Main {
         return foundBindoWinner;
     }
 
-    private static void findAndPrintTop3() {
-        System.out.printf("\nTop 3:\n");
-        for (int i = 0; i < 3; i++)
-            System.out.printf("%2d %10s\n", winnersInOrder[i],
-                    bingoCardPlayers[winnersInOrderPlayers[i]]);
 
-    }
-
+    // Método para imprimir os três jogadores com maiores acertos.
+    // Usa array winnersInOrder já ordenado por acertos.
+    // Executado a cada rodada.
     private static void checkoutHits(int[] numbers) {
         for (int n: numbers) {
             for (int i = 0; i < bingoScoreCard.length; i++)
@@ -190,7 +194,6 @@ public class Main {
     // ---------------------------------------------------------------
     //   =========     BINGO -> jogando     ==================
     // ---------------------------------------------------------------
-
     private static void playBingoGame() {
         bingoScoreCardHITS = new boolean[bingoScoreCard.length][LENGHT_OF_BOARD];
 
@@ -210,7 +213,6 @@ public class Main {
             winnersInOrderPlayers[i] = i;
             bingoWinners[i] = false;
         }
-
         // Impressão do jogo inicial
         printGame();
 
@@ -230,10 +232,12 @@ public class Main {
                 System.exit(0);
             default:
                 System.out.printf("\n !!! Entrada inválida. Saindo ... !!! \n\n");
+                System.exit(-1);
         }
         orderPlayersByHits();
     }
 
+    // Método que realiza os rounds das jogadas: números sorteados ALEATORIAMENTE
     private static void playBingoGameRandom() {
         // Inicialização da matriz do jogo com FALSE
         for (int i = 0; i < numPlayers; i++)
@@ -309,38 +313,77 @@ public class Main {
         return randomNumbers;
     }
 
-
+    // Método que realiza os rounds das jogadas: números inseridos MANUALMENTE
+    // Nas entradas manuais NÃO SERÁ checado número já sorteado.
     private static void playBingoGameManual() {
         boolean[][] bingoGame = new boolean[bingoScoreCard.length][LENGHT_OF_BOARD];
-        int[] numbers = readNumbersFromInput(LENGHT_OF_BOARD);
+
+        // Inicialização da matriz do jogo com FALSE
+        for (int i = 0; i < numPlayers; i++)
+            for (int j = 0; j < LENGHT_OF_BOARD; j++)
+                bingoScoreCardHITS[i][j] = false;
+
+        System.out.printf("\n >>>>     Entrada MANUAL dos números    <<<< \n");
+        System.out.println("Insira números não repetidos separados por vírgula:");
+        System.out.println("Sintaxe: 1,2,3,4,5    Tecle X para sair.");
+
+        Scanner readFromIn = new Scanner(System.in);
+        String lineInput = null;
+        boolean nextRound = true;
+
+        numOfRounds = 0;
+        boolean foundBingoWinner = false;
+        int[] numbers = new int[LENGHT_OF_BOARD];
+
+        do {
+            System.out.println("\nEntre com a sequência (X para sair): ");
+            try {
+                lineInput = readFromIn.nextLine();
+            } catch (Exception e) {
+                System.out.printf("\n !!! Entrada inválida. !!! \n\n");
+                readFromIn.nextLine();
+            }
+            if (lineInput.equalsIgnoreCase("x")) {
+                nextRound = false;
+            } else {
+                String[] numeros = lineInput.split(",");
+                if (numeros.length != LENGHT_OF_BOARD) {
+                    System.out.printf("\n !!! Quantidade de números incorreta. !!! \n\n");
+                }
+
+                int numValue = 0;  // O número a ser incluído na cartela
+                int i = 0;
+                for (String numS : numeros) {
+                    try {
+                        numValue = Integer.parseInt(numS);
+                        if (numValue < SPINNER_MIN_NUMBER || numValue > SPINNER_MAX_NUMBER) {
+                            System.out.printf("\n !!! Número inválido. Deve ser" +
+                                            " entre: %d e %d !!! \n\n",
+                                    SPINNER_MIN_NUMBER, SPINNER_MAX_NUMBER);
+                        }
+                    } catch (NumberFormatException ex) {
+                        ex.printStackTrace();
+                        System.out.printf("\n !!! Erro na conversão !!! \n\n");
+                    }
+                    numbers[i] = numValue;
+                    // Atualização do array de números sorteados
+                    bingoSpinnerNumbers[numValue-1] = 0; // numValue=10 então
+                                                        // bingoSpinnerNumbers[9] <= 0
+                }
+                checkoutHits(numbers);
+                printNumbers(numbers);
+                printGame();
+                foundBingoWinner = findBingoWinner();
+                numOfRounds++;
+            }
+            if (foundBingoWinner) {
+                printFoundBingoWinner();
+                nextRound = false;
+            }
+            orderPlayersByHits();
+            findAndPrintTop3();
+        } while (nextRound);
     }
-
-    private static int[] readNumbersFromInput(int lenghtOfBoard) {
-        // int[] numbers = new int[LENGHT_OF_BOARD]{2,2,2,2,2};
-        int[] numbers = new int[]{2,2,2,2,2};
-        return numbers;
-    }
-
-    // ---------------------------------------------------------------
-    // =========     Método para tratar entrada     ==================
-    // ---------------------------------------------------------------
-
-    public static byte pauseToReadKey(String message) {
-        byte keyIn = 0;
-        System.out.println();
-        System.out.print(message);
-        try {
-            BufferedReader bReader = new BufferedReader(
-                    new InputStreamReader(System.in));
-            keyIn = Byte.parseByte(bReader.readLine());
-            return keyIn;
-        } catch (Exception e) {
-            keyIn = 'X';
-        } finally {
-            return keyIn;
-        }
-    }
-
     // ---------------------------------------------------------------
     // =========  Métodos para INICIALIZAR o jogo   ==================
     // ---------------------------------------------------------------
@@ -415,7 +458,8 @@ public class Main {
         }
         return randomNumbers;
     }
-
+    // Método para verificar se um número se encontra dentro de um array
+    // Returna: true, se sim, ou false, se não
     private static boolean checkUniquenessValueInArray(int[] randomNumbers, int numRandom) {
         for (int i = 0; i < randomNumbers.length; i++) {
             if (randomNumbers[i] == numRandom)
@@ -423,8 +467,7 @@ public class Main {
         }
         return true;
     }
-
-
+    // Método para gerar cartelas a partir da entrada do usuário
     private static void genCardFromInput() {
         bingoScoreCard = new int[numPlayers][LENGHT_OF_BOARD];
         String[] boardCards = new String[numPlayers];
@@ -465,16 +508,12 @@ public class Main {
 
             for (String s: boardCards) {
                 System.out.println(s);
-
                 String[] card = s.split(",");
                 if (card.length != LENGHT_OF_BOARD) {
                     System.out.printf("\n !!! Entrada de quantidade de números incorreta. !!! \n\n");
                     invalidInput = true;
                     break;
                 }
-
-                System.out.println(s);
-
                 int numValue = 0;  // O número a ser incluído na cartela
                 int cardNumber = 0;  // Índice da cartela que irá receber o valor do número
                 for (String numS : card) {
@@ -494,16 +533,21 @@ public class Main {
                 }
                 numOfPlayer++;  // Vai para a cartela do próximo jogador
             }
+            System.out.printf("\nNúmero de cartelas lidas: %d\n", numOfPlayer);
+            if (numOfPlayer == numPlayers)
+                invalidInput = false;
         }
     }
 
+    // Método para leitura de jogadores a partir da entrada Scanner
     private static void readPlayersFromInput() {
         Scanner readFromIn = new Scanner(System.in);
         String lineInput = null;
 
         boolean invalidInput = true;
         while (invalidInput) {
-            System.out.println("a) Entre com o nome dos jogadores na forma: player1-player2 ou (X) para sair: ");
+            System.out.println("a) Entre com o nome dos jogadores na forma:" +
+                    " player1-player2 ou (X) para sair: ");
             try {
                 lineInput = readFromIn.nextLine();
             } catch (Exception e) {
@@ -524,6 +568,16 @@ public class Main {
     // ---------------------------------------------------------------
     // =========  Métodos para IMPRESSÃO   ==================
     // ---------------------------------------------------------------
+    // Método para imprimir os três jogadores com maiores acertos.
+    // Usa array winnersInOrder já ordenado por acertos.
+    // Executado a cada rodada.
+    private static void findAndPrintTop3() {
+        System.out.printf("\nTop 3:\n");
+        for (int i = 0; i < 3; i++)
+            System.out.printf("%2d %20s\n", winnersInOrder[i],
+                    bingoCardPlayers[winnersInOrderPlayers[i]]);
+
+    }
     private static void printHeaderForResults() {
         System.out.println();
         System.out.println(" $$$$ Bingo Ada Tech +50 $$$$  ");
@@ -547,16 +601,18 @@ public class Main {
     }
     private static void printGame() {
         for (int i = 0; i < bingoScoreCardHITS.length; i++)
-            System.out.printf("\nNúmero Jogador: %d - Nome: %s: %s", i, bingoCardPlayers[i],
+            System.out.printf("\nNúmero Jogador:%2d - Nome:%20s %s", i,
+                    bingoCardPlayers[i],
                     Arrays.toString(bingoScoreCardHITS[i]));
         System.out.println();
     }
+    // Método para impressão das cartelas a cada jogada
+    //   Serão impressos valores 1 e 0 no lugar de true e false
     private static void printBoardCard() {
         for (int i = 0; i < bingoScoreCard.length; i++)
-            System.out.printf("\nNúmero Jogador: %d - Nome: %s: %s", i, bingoCardPlayers[i],
-                    Arrays.toString(bingoScoreCard[i]));
+            System.out.printf("\nNúmero Jogador:%2d Nome:%20s %s", i,
+                    bingoCardPlayers[i], Arrays.toString(bingoScoreCard[i]));
     }
-
     private static void printHeaderForBingo(){
         System.out.println();
         System.out.println(" $$$$ Bingo Ada Tech +50 $$$$  ");
